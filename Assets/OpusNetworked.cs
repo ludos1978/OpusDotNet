@@ -18,11 +18,21 @@ public class OpusNetworked : NetworkBehaviour {
     void OnSerializeNetworkView(BitStream stream, NetworkMessageInfo info) {
         string _name = "";
         if (stream.isWriting) {
-            _name = name;
-            stream.Serialize(ref _name);
+            //_name = name;
+            int length = name.Length;
+            stream.Serialize(ref length);
+            char[] chars = name.ToCharArray ();
+            for (int i = 0; i < length; i++) {
+                stream.Serialize(ref chars [i]);
+            }
         } else {
-            stream.Serialize(ref _name);
-            name = _name;
+            int length = 0;
+            stream.Serialize(ref length);
+            char[] chars = new char[length];
+            for (int i = 0; i < length; i++) {
+                stream.Serialize (ref chars [i]);
+            }
+            name = chars.ToString ();
         }
     }
 
