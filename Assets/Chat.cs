@@ -20,10 +20,17 @@ public class Chat : NetworkBehaviour {
         chatLog.Callback = OnChatUpdated;
     }
 
+
+    private void OnChatUpdated(SyncListString.Operation op, int index) {
+        chatline.text += chatLog[chatLog.Count - 1] + "\n";
+    }
+
     public void Start() {
         _client = NetworkManager.singleton.client;
         NetworkServer.RegisterHandler(chatMsg, OnServerPostChatMessage);
-        input.onEndEdit.AddListener(delegate { PostChatMessage(input.text); });
+        input.onEndEdit.AddListener(
+                delegate { PostChatMessage(input.text); }
+            );
     }
 
     [Client]
@@ -41,10 +48,6 @@ public class Chat : NetworkBehaviour {
     void OnServerPostChatMessage(NetworkMessage netMsg) {
         string message = netMsg.ReadMessage<StringMessage>().value;
         chatLog.Add(message);
-
     }
 
-    private void OnChatUpdated(SyncListString.Operation op, int index) {
-        chatline.text += chatLog[chatLog.Count - 1] + "\n";
-    }
 }

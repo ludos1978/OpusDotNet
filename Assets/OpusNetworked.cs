@@ -5,6 +5,47 @@ using UnityEngine.Networking.NetworkSystem;
 using System.Text;
 
 public class OpusNetworked : NetworkBehaviour {
+    /*[SyncVar]
+    private string MySyncString; // This string will sync across the network. It's value on the server will overide the value on all clients. Therefore this variable can only be changed only by the server, but it'll be the same on all clients
+
+    [SyncVar]
+    private int MySyncInt; // This int will sync across the network. It's value on the server will overide the value on all clients. Therefore this variable can only be changed only by the server, but it'll be the same on all clients
+
+    [SyncVar]
+    private float MySyncFloat;// This float will sync across the network. It's value on the server will overide the value on all clients. Therefore this variable can only be changed only by the server, but it'll be the same on all clients
+
+    [SyncVar]
+    private bool MySyncBool;// This bool will sync across the network. It's value on the server will overide the value on all clients. Therefore this variable can only be changed only by the server, but it'll be the same on all clients
+
+    [SyncVar(hook = "MyHookFunction")]
+    private string MySyncStringWithHook; // This is a hook, and the function "MyHookFunction" will be called whenever the variable changes.
+
+
+    //This function will be called when "MySyncStringWithHook" changes.
+    void MyHookFunction(string hook) {
+        Debug.Log("MySyncStringWithHook changed");
+    }*/
+
+    [ClientCallback]
+    void Update () {
+        if ((Time.frameCount % 30) == 0) { 
+            Cmd_MyCommmand(System.Environment.MachineName + " - " + (Time.frameCount / 30).ToString());
+        }
+    }
+
+    // how to set up a RPC
+    [ClientRpc]
+    void Rpc_MyRPC(string value) {
+        Debug.Log(System.Environment.MachineName + " received " + value);
+    }
+
+    // How to set up a Command
+    [Command]
+    void Cmd_MyCommmand(string value)  {
+        Rpc_MyRPC(value);
+    }
+
+
     /*const short chatMsg = 1001;
     NetworkClient _client;
 
