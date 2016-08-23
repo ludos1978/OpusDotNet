@@ -1,4 +1,4 @@
-# OpusDotNet
+# Opus Codec in Unity 3d
 work in progress (23.8.16) version of an opus speech synchronisation for unity 3d
 
 # state
@@ -12,6 +12,8 @@ compiled the libraries on windows and osx from:
 https://www.opus-codec.org/downloads/
 
 # license
+lgpl except for the code that is differently licensed.
+
 hopefully someone can use this and make his improvements available to the public as well!
 
 # tested on:
