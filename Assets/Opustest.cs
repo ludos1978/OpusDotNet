@@ -131,9 +131,7 @@ public class Opustest : MonoBehaviour {
         }
         playWritePosition += decodedData.Length;
 
-        Debug.Log("Opustest.SendData: transmission data " + encodedData.Length + " inData " + micData.Length + " outData " + decodedData.Length + " "); // + decoder.<);
-
-
+        //Debug.Log("Opustest.SendData: transmission data " + encodedData.Length + " inData " + micData.Length + " outData " + decodedData.Length + " "); // + decoder.<);
 
         if (false) { 
             // input & ouput volume test
