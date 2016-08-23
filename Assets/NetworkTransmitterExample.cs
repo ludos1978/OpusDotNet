@@ -4,38 +4,47 @@ using UnityEngine.Networking;
 using UnityEngine.Networking.NetworkSystem;
 using System.Text;
 
-public class NetworkTransmitterExample : NetworkBehaviour {
-    string name = "";
+public class NetworkTransmitterExample : NetworkTransmitter {
+    string name = "hello world";
     //inside a class, derived from network behaviour, which has the NetworkTransmitter component attached...
-    void Awake () {
+
+    public override void OnStartClient () {
+        base.OnStartClient();
+
+        Debug.Log("NetworkTransmitterExample.OnStartClient");
         if (isLocalPlayer) {
             name = System.Environment.MachineName;
-            Debug.Log("NetworkTransmitterExample.Awake: local name " + name);
+            Debug.Log("NetworkTransmitterExample.OnStartClient: local name " + name);
         }
         else {
-            Debug.Log("NetworkTransmitterExample.Awake: non local name " + name);
+            Debug.Log("NetworkTransmitterExample.OnStartClient: non local name " + name);
         }
 
-        //on client and server
+        //on client: listen for and handle received data
+        OnDataCompletelyReceived += MyCompletelyReceivedHandler;
+        OnDataFragmentReceived += MyFragmentReceivedHandler;
+    }
+
+    public override void OnStartServer () {
+        base.OnStartServer();
+
+        Debug.Log("NetworkTransmitterExample.OnStartServer");
         NetworkTransmitter networkTransmitter = GetComponent<NetworkTransmitter>();
 
-        if (isClient) {
-            Debug.Log("NetworkTransmitterExample.Awake: isClient");
-
-            //on client: listen for and handle received data
-            networkTransmitter.OnDataCompletelyReceived += MyCompletelyReceivedHandler;
-            networkTransmitter.OnDataFragmentReceived += MyFragmentReceivedHandler;
+        if (isLocalPlayer) {
+            name = System.Environment.MachineName;
+            Debug.Log("NetworkTransmitterExample.OnStartServer: local name " + name);
+        }
+        else {
+            Debug.Log("NetworkTransmitterExample.OnStartServer: non local name " + name);
         }
 
-        if (isServer) {
-            byte[] toBytes = Encoding.ASCII.GetBytes(name);
-            Debug.Log("NetworkTransmitterExample.Awake: isServer");
+        byte[] toBytes = Encoding.ASCII.GetBytes(name);
 
-            //on server: transmit data. myDataToSend is an object serialized to byte array.
-            StartCoroutine(networkTransmitter.SendBytesToClientsRoutine(0, toBytes));
-        }
+        //on server: transmit data. myDataToSend is an object serialized to byte array.
+        StartCoroutine(networkTransmitter.SendBytesToClientsRoutine(0, toBytes));
     }
-     
+
     //on client this will be called once the complete data array has been received
     [Client]
     private void MyCompletelyReceivedHandler(int transmissionId, byte[] data) {
@@ -51,14 +60,4 @@ public class NetworkTransmitterExample : NetworkBehaviour {
         string something = Encoding.ASCII.GetString(data);
         Debug.Log("NetworkTransmitterExample.MyFragmentReceivedHandler " + something);
     }
-
-    // Use this for initialization
-    void Start () {
-	
-	}
-	
-	// Update is called once per frame
-	void Update () {
-	
-	}
 }

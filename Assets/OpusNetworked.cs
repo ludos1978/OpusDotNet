@@ -1,62 +1,64 @@
 ﻿using UnityEngine;
-using System.Collections;
+using UnityEngine.UI;
 using UnityEngine.Networking;
+using UnityEngine.Networking.NetworkSystem;
+using System.Text;
 
 public class OpusNetworked : NetworkBehaviour {
-    public string name = "something";
+    /*const short chatMsg = 1001;
+    NetworkClient _client;
 
-    public override void OnStartLocalPlayer () {
+    [SerializeField]
+    private Text chatline;
+    [SerializeField]
+    private SyncListStruct<byte> opusData = new SyncListStruct<byte>();
+    [SerializeField]
+    private InputField input;
+
+    public void Awake () {
+        string name = "";
         if (isLocalPlayer) {
             name = System.Environment.MachineName;
-            Debug.Log ("OpusNetworked.Start: local name " + name);
-        } else {
-            Debug.Log ("OpusNetworked.Start: non local name " + name);
+            Debug.Log("OpusNetworked.Awake: local name " + name);
         }
-
-    }
-
-    void OnSerializeNetworkView(BitStream stream, NetworkMessageInfo info) {
-        string _name = "";
-        if (stream.isWriting) {
-            Debug.Log("OpusNetworked.OnSerializeNetworkView: isWriting " + name);
-            int length = name.Length;
-            stream.Serialize(ref length);
-            char[] chars = name.ToCharArray ();
-            for (int i = 0; i < length; i++) {
-                stream.Serialize(ref chars [i]);
-            }
-        } else {
-            Debug.Log("OpusNetworked.OnSerializeNetworkView: isReading " + name);
-            int length = 0;
-            stream.Serialize(ref length);
-            char[] chars = new char[length];
-            for (int i = 0; i < length; i++) {
-                stream.Serialize (ref chars [i]);
-            }
-            name = chars.ToString ();
+        else {
+            Debug.Log("OpusNetworked.Awake: non local name " + name);
         }
     }
 
-    public void Update () {
-        //SetDirtyBit(
+    public override void OnStartClient() {
+        opusData.Callback = OnOpusUpdated;
     }
 
-    /*public override bool OnSerialize(NetworkWriter writer, bool initialState) {
-        base.OnSerialize(writer, initialState);
-
-        Debug.Log ("OpusNetworked.OnSerialize: "+name);
-        writer.Write(name);
-
-        return true;
+    public void Start() {
+        _client = NetworkManager.singleton.client;
+        NetworkServer.RegisterHandler(opusData, OnServerPostOpusMessage);
+        input.onEndEdit.AddListener(delegate { PostChatMessage(input.text); });
     }
 
-    public override void OnDeserialize(NetworkReader reader, bool initialState) {
-        base.OnDeserialize(reader, initialState);
+    [Client]
+    public void PostChatMessage(string message) {
+        if (message.Length == 0) return;
+        var msg = new StringMessage(message);
+        _client.Send(chatMsg, msg);
 
-        name = reader.ReadString ();
-        Debug.Log ("OpusNetworked.OnDeserialize: "+name);
-        if (!isLocalPlayer) {
-            name += "-nonlocal";
+        input.text = "";
+        input.ActivateInputField();
+        input.Select();
+    }
+
+    [Server]
+    void OnServerPostOpusMessage(NetworkMessage netMsg) {
+        //string message = netMsg.ReadMessage<StringMessage>().value;
+        netMessage = netMsg.ReadMessage<byte>()
+        byte[] toBytes = Encoding.ASCII.GetBytes();
+        foreach (byte b in toBytes) { 
+            opusData.Add(b);
         }
+    }
+
+    private void OnOpusUpdated(SyncList<byte>.Operation op, int index) {
+        //chatline.text += chatLog[chatLog.Count - 1] + "\n";
+        byte b = opusData[opusData.Count - 1];
     }*/
 }
