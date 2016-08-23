@@ -26,9 +26,40 @@ public class OpusNetworked : NetworkBehaviour {
         Debug.Log("MySyncStringWithHook changed");
     }*/
 
+    public override void OnStartClient() {
+        Debug.Log("OpusNetworked.OnStartClient: " + System.Environment.MachineName);
+        base.OnStartClient();
+            
+        foreach (NetworkClient c in NetworkClient.allClients) {
+            NetworkServer.SpawnWithClientAuthority(gameObject, c.connection);
+        }
+    }
+    public override void OnStartServer() {
+        Debug.Log("OpusNetworked.OnStartServer: " + System.Environment.MachineName);
+        base.OnStartServer();
+    }
+    public override void OnStartLocalPlayer() {
+        Debug.Log("OpusNetworked.OnStartLocalPlayer: " + System.Environment.MachineName);
+        base.OnStartLocalPlayer();
+
+    }
+    public override void OnStartAuthority() {
+        Debug.Log("OpusNetworked.OnStartAuthority: " + System.Environment.MachineName);
+        base.OnStartAuthority();
+    }
+    public override void OnStopAuthority() {
+        Debug.Log("OpusNetworked.OnStopAuthority: " + System.Environment.MachineName);
+        base.OnStopAuthority();
+    }
+    public override void PreStartClient() {
+        Debug.Log("OpusNetworked.PreStartClient: " + System.Environment.MachineName);
+        base.PreStartClient();
+    }
+
     [ClientCallback]
     void Update () {
-        if ((Time.frameCount % 30) == 0) {
+        //if ((Time.frameCount % 30) == 0) {
+        if (Input.GetKeyDown(KeyCode.S)) {
             string value = System.Environment.MachineName + " - " + (Time.frameCount / 30).ToString();
             Debug.Log("Update: " + System.Environment.MachineName + " send: " + value);
             Cmd_MyCommmand(System.Environment.MachineName + " - " + value);
