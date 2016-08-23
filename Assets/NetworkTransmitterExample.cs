@@ -22,12 +22,17 @@ public class NetworkTransmitterExample : NetworkBehaviour {
             //on client: listen for and handle received data
             networkTransmitter.OnDataCompletelyReceived += MyCompletelyReceivedHandler;
             networkTransmitter.OnDataFragmentReceived += MyFragmentReceivedHandler;
-        } else {
+        }
+
+        if (isServer) {
             byte[] toBytes = Encoding.ASCII.GetBytes(name);
+            Debug.Log("networkTransmitter " + networkTransmitter + " " + toBytes + " ");
+
             //on server: transmit data. myDataToSend is an object serialized to byte array.
             StartCoroutine(networkTransmitter.SendBytesToClientsRoutine(0, toBytes));
         }
     }
+
 
      
     //on client this will be called once the complete data array has been received
