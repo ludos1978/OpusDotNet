@@ -1,4 +1,7 @@
-﻿using UnityEngine;
+﻿// from: http://answers.unity3d.com/questions/1113376/unet-send-big-amount-of-data-over-network-how-to-s.html
+// by phineliner
+
+using UnityEngine;
 using System.Collections;
 using UnityEngine.Networking;
 using System.Collections.Generic;
