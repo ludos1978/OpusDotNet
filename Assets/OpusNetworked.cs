@@ -28,20 +28,23 @@ public class OpusNetworked : NetworkBehaviour {
 
     [ClientCallback]
     void Update () {
-        if ((Time.frameCount % 30) == 0) { 
-            Cmd_MyCommmand(System.Environment.MachineName + " - " + (Time.frameCount / 30).ToString());
+        if ((Time.frameCount % 30) == 0) {
+            string value = System.Environment.MachineName + " - " + (Time.frameCount / 30).ToString();
+            Debug.Log("Update: " + System.Environment.MachineName + " send: " + value);
+            Cmd_MyCommmand(System.Environment.MachineName + " - " + value);
         }
     }
 
     // how to set up a RPC
     [ClientRpc]
     void Rpc_MyRPC(string value) {
-        Debug.Log(System.Environment.MachineName + " received " + value);
+        Debug.Log("Rpc_MyRPC: " + System.Environment.MachineName + " get: " + value);
     }
 
     // How to set up a Command
     [Command]
     void Cmd_MyCommmand(string value)  {
+        Debug.Log("Cmd_MyCommmand: " + System.Environment.MachineName + " get: " + value);
         Rpc_MyRPC(value);
     }
 
