@@ -18,7 +18,7 @@ public class OpusNetworked : NetworkBehaviour {
     void OnSerializeNetworkView(BitStream stream, NetworkMessageInfo info) {
         string _name = "";
         if (stream.isWriting) {
-            //_name = name;
+            Debug.Log("OpusNetworked.OnSerializeNetworkView: isWriting " + name);
             int length = name.Length;
             stream.Serialize(ref length);
             char[] chars = name.ToCharArray ();
@@ -26,6 +26,7 @@ public class OpusNetworked : NetworkBehaviour {
                 stream.Serialize(ref chars [i]);
             }
         } else {
+            Debug.Log("OpusNetworked.OnSerializeNetworkView: isReading " + name);
             int length = 0;
             stream.Serialize(ref length);
             char[] chars = new char[length];
