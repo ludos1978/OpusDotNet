@@ -5,7 +5,8 @@ Working version of Opus Codec with limited options for Unity3d.
 it does a local recording of the microphone, sending via unet, distribution on the server and playback on the clients.
 
 # usage
-add the script along with a network identity to a gameobject with 2 child gameobjects, each child needs an audiosource, add one as src the other as player to the script. add this gameobject as player to the network manager.
+add the script along with a network identity to a gameobject with one child gameobject, the child needs an audiosource, add the child as audioplayer to the script. add this gameobject as player to a network manager (each player needs his own instance).
+
 or just use the provided example...
 
 # thanks to
