@@ -7,7 +7,10 @@ using POpusCodec;
 using System.Collections.Generic;
 using System;
 
+[RequireComponent(typeof(AudioSource))]
+[RequireComponent(typeof(NetworkIdentity))]
 public class OpusNetworked : NetworkBehaviour {
+    // device id of the microphone used to record sound
     public int micDeviceId = 0;
 
     // the audio source for the mic, used for recording sound
@@ -16,28 +19,21 @@ public class OpusNetworked : NetworkBehaviour {
     [Header("add a different audioSource for the playback")]
     public AudioSource audioplayer;
 
-    int playWritePosition = 0;
-
-    float[] playData;
-
+    // buffers to receive and send audio data
     List<float> micBuffer;
-    int packageSize;
     List<float> receiveBuffer;
+    // size of a network package of opus, audio needs to be split in equal size packages and sent
+    int packageSize;
+
+    // decoder and encoder instances of opus
     OpusEncoder encoder;
     OpusDecoder decoder;
 
-    //int samplerate = 48000;
-    int playPosition = 0;
-
-    // must be equal, other values then stereo currently do not work
+    // other values then stereo will not yet work
     POpusCodec.Enums.Channels opusChannels = POpusCodec.Enums.Channels.Stereo;
-    int audioChannels = 2;
-    // must be equal, other values then 48000 may or may not work
+    // other values then 48000 do not work at the moment, it requires and additional conversion before sending and at receiving
+    // also osx runs at 44100 i think, this causes also some hickups
     POpusCodec.Enums.SamplingRate opusSamplingRate = POpusCodec.Enums.SamplingRate.Sampling48000;
-    int audioSamplingRate = 48000;
-
-    // time of the buffer which plays the sound
-    int playDataMaxLength = 2; // seconds
 
     bool recording = false;
 
@@ -67,15 +63,12 @@ public class OpusNetworked : NetworkBehaviour {
         if (isLocalPlayer) {
 
             //data = new float[samples];
-            playData = new float[playDataMaxLength * audioSamplingRate];
             encoder = new OpusEncoder(opusSamplingRate, opusChannels);
-            //encoder.InputChannels = POpusCodec.Enums.Channels.Stereo;
-            //encoder.InputSamplingRate = POpusCodec.Enums.SamplingRate.Sampling48000;
             encoder.EncoderDelay = POpusCodec.Enums.Delay.Delay20ms;
             Debug.Log("Opustest.Start: framesize: " + encoder.FrameSizePerChannel + " " + encoder.InputChannels);
 
             // the encoder delay has some influence on the amout of data we need to send, but it's not a multiplication of it
-            packageSize = encoder.FrameSizePerChannel * audioChannels;
+            packageSize = encoder.FrameSizePerChannel * (int)opusChannels;
             //dataSendBuffer = new float[packageSize];
 
             //encoder.ForceChannels = POpusCodec.Enums.ForceChannels.NoForce;
@@ -105,8 +98,8 @@ public class OpusNetworked : NetworkBehaviour {
 
         receiveBuffer = new List<float>();
 
-        // setup a playback audio clip
-        AudioClip myClip = AudioClip.Create("MyPlayback", playDataMaxLength * audioSamplingRate, audioChannels, audioSamplingRate, true, OnAudioRead, OnAudioSetPosition);
+        // setup a playback audio clip, length is set to 1 sec (should not be used anyways)
+        AudioClip myClip = AudioClip.Create("MyPlayback", (int)opusSamplingRate, (int)opusChannels, (int)opusSamplingRate, true, OnAudioRead, OnAudioSetPosition);
         audioplayer.loop = true;
         audioplayer.clip = myClip;
         audioplayer.Play();
@@ -129,15 +122,16 @@ public class OpusNetworked : NetworkBehaviour {
 
     [ClientCallback]
     void SendData () {
-        // take pieces of buffer and send data
-        while (micBuffer.Count > packageSize) {
-            byte[] encodedData = encoder.Encode(micBuffer.GetRange(0, packageSize).ToArray());
-            Debug.Log("OpusNetworked.SendData: " + encodedData.Length);
-            CmdDistributeData(encodedData);
-            micBuffer.RemoveRange(0, packageSize);
+        if (isLocalPlayer) {
+            // take pieces of buffer and send data
+            while (micBuffer.Count > packageSize) {
+                byte[] encodedData = encoder.Encode (micBuffer.GetRange (0, packageSize).ToArray ());
+                Debug.Log ("OpusNetworked.SendData: " + encodedData.Length);
+                CmdDistributeData (encodedData);
+                micBuffer.RemoveRange (0, packageSize);
+            }
         }
     }
-
 
     [Command]
     void CmdDistributeData(byte[] encodedData) {
@@ -160,7 +154,7 @@ public class OpusNetworked : NetworkBehaviour {
     // this is used by the second audio source, to read data from playData and play it back
     // OnAudioRead requires the AudioSource to be on the same GameObject as this script
     void OnAudioRead(float[] data) {
-        Debug.LogWarning("Opustest.OnAudioRead: " + data.Length + " " + playPosition);
+        Debug.LogWarning("Opustest.OnAudioRead: " + data.Length);
 
         int pullSize = Mathf.Min(data.Length, receiveBuffer.Count);
         float[] dataBuf = receiveBuffer.GetRange(0, pullSize).ToArray();
@@ -173,6 +167,6 @@ public class OpusNetworked : NetworkBehaviour {
         }
     }
     void OnAudioSetPosition(int newPosition) {
-        playPosition = newPosition;
+        // we dont need the audio position at the moment
     }
 }
