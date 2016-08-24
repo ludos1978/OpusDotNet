@@ -129,12 +129,14 @@ public class OpusNetworked : NetworkBehaviour {
 
     [ClientCallback]
     void SendData () {
-        // take pieces of buffer and send data
-        while (micBuffer.Count > packageSize) {
-            byte[] encodedData = encoder.Encode(micBuffer.GetRange(0, packageSize).ToArray());
-            Debug.Log("OpusNetworked.SendData: " + encodedData.Length);
-            CmdDistributeData(encodedData);
-            micBuffer.RemoveRange(0, packageSize);
+        if (isLocalPlayer) { 
+            // take pieces of buffer and send data
+            while (micBuffer.Count > packageSize) {
+                byte[] encodedData = encoder.Encode(micBuffer.GetRange(0, packageSize).ToArray());
+                Debug.Log("OpusNetworked.SendData: " + encodedData.Length);
+                CmdDistributeData(encodedData);
+                micBuffer.RemoveRange(0, packageSize);
+            }
         }
     }
 
