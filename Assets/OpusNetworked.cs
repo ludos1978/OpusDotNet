@@ -26,13 +26,17 @@ public class OpusNetworked : NetworkBehaviour {
         Debug.Log("MySyncStringWithHook changed");
     }*/
 
+    //[ServerCallback]
     public override void OnStartClient() {
         Debug.Log("OpusNetworked.OnStartClient: " + System.Environment.MachineName);
         base.OnStartClient();
-            
-        foreach (NetworkClient c in NetworkClient.allClients) {
+
+        //Cmd_GetAuthority(GetComponent<NetworkIdentity>());
+        //if (NetworkServer.active) { 
+        /*oreach (NetworkClient c in NetworkClient.allClients) {
             NetworkServer.SpawnWithClientAuthority(gameObject, c.connection);
-        }
+        }*/
+        //}
     }
     public override void OnStartServer() {
         Debug.Log("OpusNetworked.OnStartServer: " + System.Environment.MachineName);
@@ -55,6 +59,8 @@ public class OpusNetworked : NetworkBehaviour {
         Debug.Log("OpusNetworked.PreStartClient: " + System.Environment.MachineName);
         base.PreStartClient();
     }
+
+    
 
     [ClientCallback]
     void Update () {
@@ -79,6 +85,11 @@ public class OpusNetworked : NetworkBehaviour {
         Rpc_MyRPC(value);
     }
 
+    [Command]
+    void Cmd_GetAuthority(NetworkIdentity netId) {
+        Debug.Log("Cmd_GetAuthority: " + System.Environment.MachineName + " request authority: " + netId);
+        //netId.AssignClientAuthority(connectionToClient);
+    }
 
     /*const short chatMsg = 1001;
     NetworkClient _client;
