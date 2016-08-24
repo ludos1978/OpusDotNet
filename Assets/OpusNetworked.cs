@@ -7,60 +7,14 @@ using POpusCodec;
 using System.Collections.Generic;
 using System;
 
-[RequireComponent(typeof(AudioSource))]
 public class OpusNetworked : NetworkBehaviour {
-    /*[SyncVar]
-    private string MySyncString; // This string will sync across the network. It's value on the server will overide the value on all clients. Therefore this variable can only be changed only by the server, but it'll be the same on all clients
-
-    [SyncVar]
-    private int MySyncInt; // This int will sync across the network. It's value on the server will overide the value on all clients. Therefore this variable can only be changed only by the server, but it'll be the same on all clients
-
-    [SyncVar]
-    private float MySyncFloat;// This float will sync across the network. It's value on the server will overide the value on all clients. Therefore this variable can only be changed only by the server, but it'll be the same on all clients
-
-    [SyncVar]
-    private bool MySyncBool;// This bool will sync across the network. It's value on the server will overide the value on all clients. Therefore this variable can only be changed only by the server, but it'll be the same on all clients
-
-    [SyncVar(hook = "MyHookFunction")]
-    private string MySyncStringWithHook; // This is a hook, and the function "MyHookFunction" will be called whenever the variable changes.
-
-
-    //This function will be called when "MySyncStringWithHook" changes.
-    void MyHookFunction(string hook) {
-        Debug.Log("MySyncStringWithHook changed");
-    }*/
-
-    //[ServerCallback]
-    /*public override void OnStartClient() {
-        Debug.Log("OpusNetworked.OnStartClient: " + System.Environment.MachineName);
-        base.OnStartClient();
-
-    }
-    public override void OnStartServer() {
-        Debug.Log("OpusNetworked.OnStartServer: " + System.Environment.MachineName);
-        base.OnStartServer();
-    }
-    public override void OnStartAuthority() {
-        Debug.Log("OpusNetworked.OnStartAuthority: " + System.Environment.MachineName);
-        base.OnStartAuthority();
-    }
-    public override void OnStopAuthority() {
-        Debug.Log("OpusNetworked.OnStopAuthority: " + System.Environment.MachineName);
-        base.OnStopAuthority();
-    }
-    public override void PreStartClient() {
-        Debug.Log("OpusNetworked.PreStartClient: " + System.Environment.MachineName);
-        base.PreStartClient();
-    }*/
-
     public int micDeviceId = 0;
 
     // the audio source for the mic, used for recording sound
-    [Header("add a audioSource for the microphone recording")]
-    public AudioSource src;
+    AudioSource audiorecorder;
     // the audio source for playback, must not be the same as the audio recording audiosource
     [Header("add a different audioSource for the playback")]
-    public AudioSource player;
+    public AudioSource audioplayer;
 
     int playWritePosition = 0;
 
@@ -75,8 +29,10 @@ public class OpusNetworked : NetworkBehaviour {
     //int samplerate = 48000;
     int playPosition = 0;
 
+    // must be equal, other values then stereo currently do not work
     POpusCodec.Enums.Channels opusChannels = POpusCodec.Enums.Channels.Stereo;
     int audioChannels = 2;
+    // must be equal, other values then 48000 may or may not work
     POpusCodec.Enums.SamplingRate opusSamplingRate = POpusCodec.Enums.SamplingRate.Sampling48000;
     int audioSamplingRate = 48000;
 
@@ -84,6 +40,8 @@ public class OpusNetworked : NetworkBehaviour {
     int playDataMaxLength = 2; // seconds
 
     bool recording = false;
+
+    [Header("should the locally recorded sound be played locally as well?")]
     [SyncVar]
     public bool playLocally = false;
 
@@ -97,36 +55,16 @@ public class OpusNetworked : NetworkBehaviour {
 
     [ClientCallback]
     void Update () {
-        //if ((Time.frameCount % 30) == 0) {
-        if (Input.GetKeyDown(KeyCode.S)) {
-            Cmd_MyCommmand(System.Environment.MachineName);
-        }
-
         // update if we send audio recording
         recording = Input.GetKey(KeyCode.R);
         SendData();
     }
-
-    // How to set up a Command
-    [Command]
-    void Cmd_MyCommmand(string value)  {
-        Debug.Log("Cmd_MyCommmand: " + System.Environment.MachineName + " get: " + value);
-        Rpc_MyRPC(value);
-    }
-
-    // how to set up a RPC
-    [ClientRpc]
-    void Rpc_MyRPC(string value) {
-        if (!isLocalPlayer) {
-            Debug.Log("Rpc_MyRPC: " + System.Environment.MachineName + " get: " + value);
-        }
-    }
-
+    
 
     // Use this for initialization
     void Start() {
+        micBuffer = new List<float>();
         if (isLocalPlayer) {
-            micBuffer = new List<float>();
 
             //data = new float[samples];
             playData = new float[playDataMaxLength * audioSamplingRate];
@@ -152,15 +90,14 @@ public class OpusNetworked : NetworkBehaviour {
 
             // setup a microphone audio recording
             Debug.Log("Opustest.Start: setup mic with " + Microphone.devices[micDeviceId] + " " + AudioSettings.outputSampleRate);
-            src = GetComponent<AudioSource>();
-            src.loop = true;
-            src.clip = Microphone.Start(
+            audiorecorder = GetComponent<AudioSource>();
+            audiorecorder.loop = true;
+            audiorecorder.clip = Microphone.Start(
                 Microphone.devices[micDeviceId],
                 true,
                 1,
                 AudioSettings.outputSampleRate);
-            src.volume = 1;
-            src.Play();
+            audiorecorder.Play();
         }
 
         // playback stuff
@@ -170,8 +107,9 @@ public class OpusNetworked : NetworkBehaviour {
 
         // setup a playback audio clip
         AudioClip myClip = AudioClip.Create("MyPlayback", playDataMaxLength * audioSamplingRate, audioChannels, audioSamplingRate, true, OnAudioRead, OnAudioSetPosition);
-        player.clip = myClip;
-        player.Play();
+        audioplayer.loop = true;
+        audioplayer.clip = myClip;
+        audioplayer.Play();
     }
 
     [ClientCallback]
@@ -219,44 +157,8 @@ public class OpusNetworked : NetworkBehaviour {
         receiveBuffer.AddRange(decoder.DecodePacketFloat(encodedData));
     }
 
-    /*void AddToPlayBuffer() {
-        float[] decodedData = receiveBuffer.GetRange(0, receiveBuffer.Count).ToArray();
-        receiveBuffer.RemoveRange(0, receiveBuffer.Count);
-
-        // write decodedData into playData
-        int startPos = playWritePosition % (playDataMaxLength * audioSamplingRate);
-        // more data than fits into the play buffer (overflow)
-        if ((startPos + decodedData.Length) > playData.Length) {
-            int maxLength = Mathf.Min(playData.Length, (playData.Length - startPos));
-            int remainder = decodedData.Length - maxLength;
-            //Debug.Log("split write: " + decodedData.Length + " " + startPos + " " + playData.Length + " " + "0" + " " + (maxLength - 1));
-            Array.Copy(decodedData, 0, playData, startPos, maxLength);
-            //Debug.Log("split write: " + decodedData.Length + " " + "0" + " " + playData.Length + " " + maxLength + " " + remainder);
-            Array.Copy(decodedData, maxLength, playData, 0, remainder);
-        }
-        // write all data
-        else {
-            decodedData.CopyTo(playData, playWritePosition % (playDataMaxLength * audioSamplingRate));
-        }
-
-        // testing to set the play position
-        playPosition = playWritePosition;
-
-        playWritePosition = (playWritePosition + decodedData.Length) % (playDataMaxLength * audioSamplingRate);
-
-        if (false) {
-            // input & ouput volume test
-            float outA = 0;
-            foreach (float sample in decodedData) {
-                outA += Mathf.Abs(sample);
-            }
-            float outAv = outA / decodedData.Length;
-            Debug.Log("Opustest.SendData: output volume " + outAv.ToString("0.000"));
-        }
-    }*/
-
-
     // this is used by the second audio source, to read data from playData and play it back
+    // OnAudioRead requires the AudioSource to be on the same GameObject as this script
     void OnAudioRead(float[] data) {
         Debug.LogWarning("Opustest.OnAudioRead: " + data.Length + " " + playPosition);
 
@@ -269,18 +171,6 @@ public class OpusNetworked : NetworkBehaviour {
         for (int i=pullSize; i<data.Length; i++) {
             data[i] = 0;
         }
-
-        /*// data overflow
-        if ((playPosition + data.Length) > playData.Length) {
-            int maxSize = playData.Length - playPosition;
-            Array.Copy(playData, playPosition, data, 0, maxSize);
-            Array.Copy(playData, 0, data, maxSize, data.Length - maxSize);
-        }
-        // we can just copy it over
-        else {
-            Array.Copy(playData, playPosition, data, 0, data.Length);
-        }
-        playPosition = (playPosition + data.Length) % (playDataMaxLength * audioSamplingRate);*/
     }
     void OnAudioSetPosition(int newPosition) {
         playPosition = newPosition;
