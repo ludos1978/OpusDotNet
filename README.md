@@ -1,8 +1,12 @@
 # Opus Codec in Unity 3d
-work in progress (23.8.16) version of an opus speech synchronisation for unity 3d
+Working version of Opus Codec with limited options for Unity3d.
 
 # state
-it does a local compression and decompression of audio taken from a microphone. it's missing networking (thats what im working on right now)
+it does a local recording of the microphone, sending via unet, distribution on the server and playback on the clients.
+
+# usage
+add the script along with a network identity to a gameobject with 2 child gameobjects, each child needs an audiosource, add one as src the other as player to the script. add this gameobject as player to the network manager.
+or just use the provided example...
 
 # thanks to
 uses the c# wrapper from opusdotnetinvoke:
